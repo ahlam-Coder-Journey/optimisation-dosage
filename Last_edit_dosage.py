@@ -127,6 +127,7 @@ def generate_dilution_steps_continu(dose_mg, concentration_init, nb_hours=24, de
     cible_max = dose_mg + 1.0
     volume_injecte = round(debit_mlh * nb_hours, 2)
     affichage_etapes = []
+    derniere_etape = None
 
     for etape in range(5):
         meilleures_options = []
@@ -204,51 +205,19 @@ def generate_dilution_steps_continu(dose_mg, concentration_init, nb_hours=24, de
         meilleure["type"] = "réelle"
         steps.append(meilleure)
         affichage_etapes.append(meilleure)
+        derniere_etape = meilleure
 
         if cible_min <= meilleure['dose'] <= cible_max:
             break
 
         current_concentration = meilleure['concentration']
 
+    if derniere_etape:
+        affichage_etapes.append({
+            "type": "metriques",
+            "moyenne_precision": derniere_etape['moyenne_precision'],
+            "ecart_type": derniere_etape['ecart_type'],
+            "IC": derniere_etape['IC']
+        })
+
     return affichage_etapes
-
-# ---------------------- INTERFACE STREAMLIT ----------------------
-st.set_page_config(page_title="Calcul de dosage intelligent", page_icon="🧪")
-st.title("💉 Application de calcul de dilution")
-
-mode = st.radio("Mode d'administration :", ["Continu", "Discontinu"])
-dose = st.number_input("Dose cible (en mg) :", min_value=0.0, step=0.1)
-concentration = st.number_input("Concentration initiale (en mg/mL) :", min_value=0.0, step=1.0)
-
-if st.button("🧪 Générer le protocole de dilution"):
-    if dose == 0 or concentration == 0:
-        st.warning("Veuillez entrer une dose et une concentration valides.")
-    else:
-        resultats = generate_dilution_steps_continu(dose, concentration) if mode == "Continu" else generate_dilution_steps_discontinu(dose, concentration)
-
-        if not resultats:
-            st.error("❌ Aucun protocole trouvé.")
-        else:
-            st.success(f"✅ Protocole généré pour {dose} mg :")
-            for idx, step in enumerate(resultats, 1):
-                with st.expander(f"🧪 Étape {idx}"):
-                    st.write(f"**Seringue utilisée** : {step['seringue']} mL")
-                    st.write(f"**Volume prélevé** : {step['volume prélevé']} mL")
-                    st.write(f"**Ratio seringue rempli** : {step['ratio']}%")
-                    st.write(f"**Concentration obtenue** : {step['concentration']} mg/mL")
-                    st.write(f"**Dose obtenue** : {step['dose']} mg")
-                    if step.get("type") == "réelle":
-                        st.write(f"**Volume ajouté** : {step['volume ajouté']} mL")
-                        st.write(f"**Volume total** : {step['volume total']} mL")
-                        st.write(f"**Précision (moyenne)** : {step['moyenne_precision']:.2f}")
-                        st.write(f"**Écart-type** : {step['ecart_type']:.2f}")
-                        st.write(f"**Intervalle de confiance (95%)** : [{step['IC'][0]}, {step['IC'][1]}]")
-                    if 'volume injecté' in step:
-                        st.write(f"**Volume injecté** : {step['volume injecté']} mL")
-                    if 'remarque' in step:
-                        st.info(step['remarque'])
-
-            if mode == "Discontinu":
-                st.subheader(f"💉 Volume final à injecter : {resultats[-1]['volume injecté']} mL")
-            else:
-                st.subheader("💧 Mode continu avec une vitesse de perfusion de 0.1 mL/h")
