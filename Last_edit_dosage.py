@@ -286,5 +286,12 @@ if st.button("🧪 Générer le protocole de dilution"):
 
             if mode == "Discontinu":
                 st.subheader(f"💉 Volume final à injecter : {resultats[-1]['volume injecté']} mL")
+
+            if mode == "Discontinu":
+                for step in reversed(resultats):
+                    if step.get("type") != "metriques":
+                        st.subheader(f"💉 Volume final à injecter : {step['volume injecté']} mL")
+                        break
+
             else:
                 st.subheader("💧 Mode continu avec une vitesse de perfusion de 0.1 mL/h")
