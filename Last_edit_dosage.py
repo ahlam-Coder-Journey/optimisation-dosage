@@ -45,7 +45,7 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
     cible_min = dose_mg - 1.0
     cible_max = dose_mg + 1.0
 
-    for etape in range(5):  # max 5 étapes
+    for etape in range(5):
         meilleures_options = []
         for syringe_volume, graduation in SYRINGES.items():
             vol_prelevables = np.arange(graduation, syringe_volume + 0.01, graduation)
@@ -59,12 +59,11 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
 
                 max_ajout = syringe_volume - volume_prelevé
                 for vol_ajouté in np.arange(0, max_ajout + 0.01, graduation):
-                    volume_total = round(volume_prelevé + vol_ajouté, 2)
+                    volume_total = arrondir_volume(volume_prelevé + vol_ajouté, graduation)
                     if volume_total > syringe_volume:
                         continue
                     if not est_mesurable(volume_total, graduation):
                         continue
-
                     ratio = round((volume_total / syringe_volume) * 100, 2)
                     if ratio < 30:
                         continue
@@ -76,15 +75,16 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
                         if volume_injecte > syringe_volume:
                             continue
 
-                        dose = round(new_concentration * volume_injecte, 2)
-                        if dose > dose_mg + 1.5:
+                        dose_obtenue = round(new_concentration * volume_injecte, 2)
+                        if dose_obtenue > dose_mg + 1.5:
                             continue
 
-                        moyenne_precision = calculer_moyenne_precision(dose, etape + 1, ratio)
-                        ecart_type = calculer_ecart_type(dose, etape + 1, ratio)
+                        moyenne_precision = calculer_moyenne_precision(dose_obtenue, etape + 1, ratio)
+                        ecart_type = calculer_ecart_type(dose_obtenue, etape + 1, ratio)
                         ic_inf, ic_sup = calculer_IC(moyenne_precision, ecart_type)
 
                         option = {
+                            "type": "réelle",
                             "étape": etape + 1,
                             "seringue": syringe_volume,
                             "volume prélevé": volume_prelevé,
@@ -92,7 +92,7 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
                             "volume total": volume_total,
                             "ratio": ratio,
                             "concentration": new_concentration,
-                            "dose": dose,
+                            "dose": dose_obtenue,
                             "volume injecté": volume_injecte,
                             "moyenne_precision": moyenne_precision,
                             "ecart_type": ecart_type,
@@ -104,7 +104,10 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
 
                         meilleures_options.append(option)
 
-        meilleures_options = sorted(meilleures_options, key=lambda x: (abs(x['dose'] - dose_mg), x['moyenne_precision']))
+        meilleures_options = sorted(
+            meilleures_options,
+            key=lambda x: (abs(x['dose'] - dose_mg), x['moyenne_precision'])
+        )
 
         if not meilleures_options:
             break
@@ -127,6 +130,7 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
         })
 
     return steps
+
 
 # ---------------------- MODE CONTINU (LOGIQUE MODIFIÉE) ----------------------
 def generate_dilution_steps_continu(dose_mg, concentration_init, nb_hours=24, debit_mlh=0.1):
