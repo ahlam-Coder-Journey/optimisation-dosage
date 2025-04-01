@@ -45,7 +45,7 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
     cible_min = dose_mg - 1.0
     cible_max = dose_mg + 1.0
 
-    for etape in range(5):
+    for etape in range(5):  # max 5 étapes
         meilleures_options = []
         for syringe_volume, graduation in SYRINGES.items():
             vol_prelevables = np.arange(graduation, syringe_volume + 0.01, graduation)
@@ -64,6 +64,7 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
                         continue
                     if not est_mesurable(volume_total, graduation):
                         continue
+
                     ratio = round((volume_total / syringe_volume) * 100, 2)
                     if ratio < 30:
                         continue
@@ -99,7 +100,8 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
                             "IC": (ic_inf, ic_sup)
                         }
 
-                        
+                        if etape == 0 and volume_prelevé <= 1.0:
+                            option["remarque"] = "📏 Volume mesuré avec seringue de 1 mL pour précision."
 
                         meilleures_options.append(option)
 
