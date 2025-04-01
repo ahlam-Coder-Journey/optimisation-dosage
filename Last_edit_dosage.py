@@ -284,8 +284,7 @@ if st.button("🧪 Générer le protocole de dilution"):
                         if 'remarque' in step:
                             st.info(step['remarque'])
 
-            if mode == "Discontinu":
-                st.subheader(f"💉 Volume final à injecter : {resultats[-1]['volume injecté']} mL")
+        
 
             if mode == "Discontinu":
                 for step in reversed(resultats):
