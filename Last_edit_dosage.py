@@ -45,7 +45,7 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
     cible_min = dose_mg - 1.0
     cible_max = dose_mg + 1.0
 
-    for etape in range(5):
+    for etape in range(5):  # max 5 étapes
         meilleures_options = []
         for syringe_volume, graduation in SYRINGES.items():
             vol_prelevables = np.arange(graduation, syringe_volume + 0.01, graduation)
@@ -116,6 +116,15 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
             break
 
         current_concentration = meilleure['concentration']
+
+    if steps:
+        derniere = steps[-1]
+        steps.append({
+            "type": "metriques",
+            "moyenne_precision": derniere['moyenne_precision'],
+            "ecart_type": derniere['ecart_type'],
+            "IC": derniere['IC']
+        })
 
     return steps
 
