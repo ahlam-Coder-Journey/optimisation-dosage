@@ -221,6 +221,7 @@ def generate_dilution_steps_continu(dose_mg, concentration_init, nb_hours=24, de
         })
 
     return affichage_etapes
+
 # ---------------------- INTERFACE STREAMLIT ----------------------
 st.set_page_config(page_title="Calcul de dosage intelligent", page_icon="🧪")
 st.title("💉 Application de calcul de dilution")
@@ -240,30 +241,27 @@ if st.button("🧪 Générer le protocole de dilution"):
         else:
             st.success(f"✅ Protocole généré pour {dose} mg :")
             for idx, step in enumerate(resultats, 1):
-                with st.expander(f"🧪 Étape {idx}"):
-                    st.write(f"**Seringue utilisée** : {step['seringue']} mL")
-                    st.write(f"**Volume prélevé** : {step['volume prélevé']} mL")
-                    st.write(f"**Ratio seringue rempli** : {step['ratio']}%")
-                    st.write(f"**Concentration obtenue** : {step['concentration']} mg/mL")
-                    st.write(f"**Dose obtenue** : {step['dose']} mg")
-                    if step.get('type') == 'réelle':
-                        st.write(f"**Volume ajouté** : {step['volume ajouté']} mL")
-                        st.write(f"**Volume total** : {step['volume total']} mL")
-                    if 'volume injecté' in step:
-                        st.write(f"**Volume injecté** : {step['volume injecté']} mL")
-                    if 'remarque' in step:
-                        st.info(step['remarque'])
+                if step.get("type") == "metriques":
+                    st.markdown("### 📊 Métriques finales")
+                    st.write(f"**Précision (moyenne)** : {step['moyenne_precision']:.2f}")
+                    st.write(f"**Écart-type** : {step['ecart_type']:.2f}")
+                    st.write(f"**Intervalle de confiance (95%)** : [{step['IC'][0]}, {step['IC'][1]}]")
+                else:
+                    with st.expander(f"🧪 Étape {idx}"):
+                        st.write(f"**Seringue utilisée** : {step['seringue']} mL")
+                        st.write(f"**Volume prélevé** : {step['volume prélevé']} mL")
+                        st.write(f"**Ratio seringue rempli** : {step['ratio']}%")
+                        st.write(f"**Concentration obtenue** : {step['concentration']} mg/mL")
+                        st.write(f"**Dose obtenue** : {step['dose']} mg")
+                        if step.get('type') == 'réelle':
+                            st.write(f"**Volume ajouté** : {step['volume ajouté']} mL")
+                            st.write(f"**Volume total** : {step['volume total']} mL")
+                        if 'volume injecté' in step:
+                            st.write(f"**Volume injecté** : {step['volume injecté']} mL")
+                        if 'remarque' in step:
+                            st.info(step['remarque'])
 
             if mode == "Discontinu":
                 st.subheader(f"💉 Volume final à injecter : {resultats[-1]['volume injecté']} mL")
             else:
                 st.subheader("💧 Mode continu avec une vitesse de perfusion de 0.1 mL/h")
-
-                # Section finale pour les métriques
-                metrique_finale = [s for s in resultats if s.get("type") == "metriques"]
-                if metrique_finale:
-                    metrique_finale = metrique_finale[0]
-                    st.markdown("### 📊 Métriques finales")
-                    st.write(f"**Précision (moyenne)** : {metrique_finale['moyenne_precision']:.2f}")
-                    st.write(f"**Écart-type** : {metrique_finale['ecart_type']:.2f}")
-                    st.write(f"**Intervalle de confiance (95%)** : [{metrique_finale['IC'][0]}, {metrique_finale['IC'][1]}]")
