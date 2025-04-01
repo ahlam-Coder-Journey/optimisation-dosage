@@ -257,6 +257,11 @@ if st.button("🧪 Générer le protocole de dilution"):
                         if step.get('type') == 'réelle':
                             st.write(f"**Volume ajouté** : {step['volume ajouté']} mL")
                             st.write(f"**Volume total** : {step['volume total']} mL")
+                            
+                        if step.get('type') == 'virtuelle':
+                            st.write(f"**Volume ajouté** : 0.0 mL")
+                            st.write(f"**Volume total** : {step['volume prélevé']} mL")
+                            
                         st.write(f"**Ratio seringue rempli** : {step['ratio']}%")
                         st.write(f"**Concentration obtenue** : {step['concentration']} mg/mL")
                         st.write(f"**Dose obtenue** : {step['dose']} mg")
