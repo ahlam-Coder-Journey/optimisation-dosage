@@ -119,13 +119,14 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
 
     return steps
 
-# ---------------------- MODE CONTINU ----------------------
+# ---------------------- MODE CONTINU (LOGIQUE MODIFIÉE) ----------------------
 def generate_dilution_steps_continu(dose_mg, concentration_init, nb_hours=24, debit_mlh=0.1):
     current_concentration = concentration_init
     steps = []
     cible_min = dose_mg - 1.0
     cible_max = dose_mg + 1.0
     volume_injecte = round(debit_mlh * nb_hours, 2)
+    affichage_etapes = []
 
     for etape in range(5):
         meilleures_options = []
@@ -184,14 +185,32 @@ def generate_dilution_steps_continu(dose_mg, concentration_init, nb_hours=24, de
             break
 
         meilleure = meilleures_options[0]
+
+        if meilleure['volume ajouté'] != 0:
+            ratio_virtuel = round((meilleure['volume prélevé'] / meilleure['seringue']) * 100, 2)
+            concentration_virtuelle = (meilleure['volume total'] * meilleure['concentration']) / meilleure['volume prélevé']
+            concentration_virtuelle = round(concentration_virtuelle + 1e-3, 2)
+            dose_obtenue = round(concentration_virtuelle * volume_injecte, 2)
+            etape_virtuelle = {
+                "type": "virtuelle",
+                "seringue": meilleure['seringue'],
+                "volume prélevé": meilleure['volume prélevé'],
+                "ratio": ratio_virtuel,
+                "concentration": concentration_virtuelle,
+                "dose": dose_obtenue
+            }
+            affichage_etapes.append(etape_virtuelle)
+
+        meilleure["type"] = "réelle"
         steps.append(meilleure)
+        affichage_etapes.append(meilleure)
 
         if cible_min <= meilleure['dose'] <= cible_max:
             break
 
         current_concentration = meilleure['concentration']
 
-    return steps
+    return affichage_etapes
 
 # ---------------------- INTERFACE STREAMLIT ----------------------
 st.set_page_config(page_title="Calcul de dosage intelligent", page_icon="🧪")
@@ -211,18 +230,19 @@ if st.button("🧪 Générer le protocole de dilution"):
             st.error("❌ Aucun protocole trouvé.")
         else:
             st.success(f"✅ Protocole généré pour {dose} mg :")
-            for step in resultats:
-                with st.expander(f"🧪 Étape {step['étape']}"):
+            for idx, step in enumerate(resultats, 1):
+                with st.expander(f"🧪 Étape {idx}"):
                     st.write(f"**Seringue utilisée** : {step['seringue']} mL")
                     st.write(f"**Volume prélevé** : {step['volume prélevé']} mL")
-                    st.write(f"**Volume ajouté** : {step['volume ajouté']} mL")
-                    st.write(f"**Volume total** : {step['volume total']} mL")
                     st.write(f"**Ratio seringue rempli** : {step['ratio']}%")
                     st.write(f"**Concentration obtenue** : {step['concentration']} mg/mL")
                     st.write(f"**Dose obtenue** : {step['dose']} mg")
-                    st.write(f"**Précision (moyenne)** : {step['moyenne_precision']:.2f}")
-                    st.write(f"**Écart-type** : {step['ecart_type']:.2f}")
-                    st.write(f"**Intervalle de confiance (95%)** : [{step['IC'][0]}, {step['IC'][1]}]")
+                    if step.get("type") == "réelle":
+                        st.write(f"**Volume ajouté** : {step['volume ajouté']} mL")
+                        st.write(f"**Volume total** : {step['volume total']} mL")
+                        st.write(f"**Précision (moyenne)** : {step['moyenne_precision']:.2f}")
+                        st.write(f"**Écart-type** : {step['ecart_type']:.2f}")
+                        st.write(f"**Intervalle de confiance (95%)** : [{step['IC'][0]}, {step['IC'][1]}]")
                     if 'volume injecté' in step:
                         st.write(f"**Volume injecté** : {step['volume injecté']} mL")
                     if 'remarque' in step:
