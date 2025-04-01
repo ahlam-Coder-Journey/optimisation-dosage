@@ -99,8 +99,7 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
                             "IC": (ic_inf, ic_sup)
                         }
 
-                        if etape == 0 and volume_prelevé <= 1.0:
-                            option["remarque"] = "📏 Volume mesuré avec seringue de 1 mL pour précision."
+                        
 
                         meilleures_options.append(option)
 
