@@ -117,7 +117,10 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
 
         current_concentration = meilleure['concentration']
 
-    return steps# ---------------------- INTERFACE STREAMLIT ----------------------
+    return steps
+    
+
+# ---------------------- INTERFACE STREAMLIT ----------------------
 st.set_page_config(page_title="Calcul de dosage intelligent", page_icon="🧪")
 st.title("💉 Application de calcul de dilution")
 
