@@ -249,7 +249,11 @@ if st.button("🧪 Générer le protocole de dilution"):
                 else:
                     with st.expander(f"🧪 Étape {idx}"):
                         st.write(f"**Seringue utilisée** : {step['seringue']} mL")
-                        st.write(f"**Volume prélevé** : {step['volume prélevé']} mL")
+                        
+                        # Affichage conditionnel selon l'étape
+                        label_volume = "Volume gardé" if idx >= 2 else "Volume prélevé"
+                        st.write(f"**{label_volume}** : {step['volume prélevé']} mL")
+
                         if step.get('type') == 'réelle':
                             st.write(f"**Volume ajouté** : {step['volume ajouté']} mL")
                             st.write(f"**Volume total** : {step['volume total']} mL")
