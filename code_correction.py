@@ -110,7 +110,7 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
 
         meilleure = meilleures_options[0]
 
-        if etape == 0 and meilleure['volume ajouté'] != 0:
+        if etape == 1 and meilleure['volume ajouté'] != 0:
             etape_virtuelle = {
                 "type": "virtuelle",
                 "étape": 1,
