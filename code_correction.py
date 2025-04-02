@@ -297,7 +297,9 @@ if st.button("🧪 Générer le protocole de dilution"):
                         st.write(f"**Ratio seringue rempli** : {step['ratio']}%")
                         st.write(f"**Concentration obtenue** : {step.get('concentration finale', step.get('concentration', 'N/A'))} mg/mL")
 
-                        st.write(f"**Dose obtenue** : {step.get('dose')} mg")
+                        if not (mode == "Discontinu" and step.get('type') == 'virtuelle'):
+                            st.write(f"**Dose obtenue** : {step.get('dose obtenue', step.get('dose', 'N/A'))} mg")
+
 
 
                         
