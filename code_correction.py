@@ -44,6 +44,8 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
     steps = []
     cible_min = dose_mg - 1.0
     cible_max = dose_mg + 1.0
+    is_first_step = True
+    etape_compteur = 1
 
     for etape in range(5):
         meilleures_options = []
@@ -79,12 +81,12 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
                         if dose > dose_mg + 1.5:
                             continue
 
-                        moyenne_precision = calculer_moyenne_precision(dose, etape + 1, ratio)
-                        ecart_type = calculer_ecart_type(dose, etape + 1, ratio)
+                        moyenne_precision = calculer_moyenne_precision(dose, etape_compteur, ratio)
+                        ecart_type = calculer_ecart_type(dose, etape_compteur, ratio)
                         ic_inf, ic_sup = calculer_IC(moyenne_precision, ecart_type)
 
                         option = {
-                            "étape": etape + 1,
+                            "étape": etape_compteur,
                             "seringue": syringe_volume,
                             "volume prélevé": volume_prelevé,
                             "volume ajouté": round(vol_ajouté, 2),
@@ -98,7 +100,7 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
                             "IC": (ic_inf, ic_sup)
                         }
 
-                        if etape == 0 and volume_prelevé <= 1.0:
+                        if etape_compteur == 1 and volume_prelevé <= 1.0:
                             option["remarque"] = "📏 Volume mesuré avec seringue de 1 mL pour précision."
 
                         meilleures_options.append(option)
@@ -110,7 +112,7 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
 
         meilleure = meilleures_options[0]
 
-        if meilleure['étape'] == 1 and meilleure['volume ajouté'] != 0.0:
+        if is_first_step and meilleure['volume ajouté'] != 0.0:
             etape_virtuelle = {
                 "type": "virtuelle",
                 "étape": 1,
@@ -123,10 +125,13 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
                 "volume injecté": meilleure['volume injecté']
             }
             steps.append(etape_virtuelle)
-            meilleure['étape'] += 1
+            meilleure['étape'] = 2
+            etape_compteur += 1
 
         meilleure["type"] = "réelle"
         steps.append(meilleure)
+        etape_compteur += 1
+        is_first_step = False
 
         if cible_min <= meilleure['dose obtenue'] <= cible_max:
             break
@@ -134,9 +139,10 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
         current_concentration = meilleure['concentration finale']
 
     if steps:
-        for step in steps:
+        for step in reversed(steps):
             if step.get("type") == "réelle":
                 derniere = step
+                break
         steps.append({
             "type": "metriques",
             "moyenne_precision": derniere['moyenne_precision'],
