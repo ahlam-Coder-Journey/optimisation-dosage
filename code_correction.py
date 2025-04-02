@@ -110,7 +110,7 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
 
         meilleure = meilleures_options[0]
 
-        if etape == 1 and meilleure['volume ajouté'] != 0:
+        if meilleure['étape'] == 1 and meilleure['volume ajouté'] != 0.0:
             etape_virtuelle = {
                 "type": "virtuelle",
                 "étape": 1,
@@ -134,7 +134,9 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
         current_concentration = meilleure['concentration finale']
 
     if steps:
-        derniere = steps[-1] if steps[-1].get("type") == "réelle" else steps[-2]
+        for step in steps:
+            if step.get("type") == "réelle":
+                derniere = step
         steps.append({
             "type": "metriques",
             "moyenne_precision": derniere['moyenne_precision'],
