@@ -59,7 +59,7 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
 
                 max_ajout = syringe_volume - volume_prelevé
                 for vol_ajouté in np.arange(0, max_ajout + 0.01, graduation):
-                    volume_total = arrondir_volume(volume_prelevé + vol_ajouté, graduation)
+                    volume_total = round(volume_prelevé + vol_ajouté, 2)
                     if volume_total > syringe_volume:
                         continue
                     if not est_mesurable(volume_total, graduation):
@@ -75,52 +75,66 @@ def generate_dilution_steps_discontinu(dose_mg, concentration_init):
                         if volume_injecte > syringe_volume:
                             continue
 
-                        dose_obtenue = round(new_concentration * volume_injecte, 2)
-                        if dose_obtenue > dose_mg + 1.5:
+                        dose = round(new_concentration * volume_injecte, 2)
+                        if dose > dose_mg + 1.5:
                             continue
 
-                        moyenne_precision = calculer_moyenne_precision(dose_obtenue, etape + 1, ratio)
-                        ecart_type = calculer_ecart_type(dose_obtenue, etape + 1, ratio)
+                        moyenne_precision = calculer_moyenne_precision(dose, etape + 1, ratio)
+                        ecart_type = calculer_ecart_type(dose, etape + 1, ratio)
                         ic_inf, ic_sup = calculer_IC(moyenne_precision, ecart_type)
 
                         option = {
-                            "type": "réelle",
                             "étape": etape + 1,
                             "seringue": syringe_volume,
                             "volume prélevé": volume_prelevé,
                             "volume ajouté": round(vol_ajouté, 2),
                             "volume total": volume_total,
                             "ratio": ratio,
-                            "concentration": new_concentration,
-                            "dose": dose_obtenue,
+                            "concentration finale": new_concentration,
+                            "dose obtenue": dose,
                             "volume injecté": volume_injecte,
                             "moyenne_precision": moyenne_precision,
                             "ecart_type": ecart_type,
                             "IC": (ic_inf, ic_sup)
                         }
 
-                        
+                        if etape == 0 and volume_prelevé <= 1.0:
+                            option["remarque"] = "📏 Volume mesuré avec seringue de 1 mL pour précision."
 
                         meilleures_options.append(option)
 
-        meilleures_options = sorted(
-            meilleures_options,
-            key=lambda x: (abs(x['dose'] - dose_mg), x['moyenne_precision'])
-        )
+        meilleures_options = sorted(meilleures_options, key=lambda x: (abs(x['dose obtenue'] - dose_mg), x['moyenne_precision']))
 
         if not meilleures_options:
             break
 
         meilleure = meilleures_options[0]
+
+        if etape == 0 and meilleure['volume ajouté'] != 0:
+            etape_virtuelle = {
+                "type": "virtuelle",
+                "étape": 1,
+                "seringue": meilleure['seringue'],
+                "volume prélevé": meilleure['volume prélevé'],
+                "volume ajouté": 0.0,
+                "ratio": round((meilleure['volume prélevé'] / meilleure['seringue']) * 100, 2),
+                "concentration": concentration_init,
+                "dose": round(concentration_init * meilleure['volume injecté'], 2),
+                "volume injecté": meilleure['volume injecté']
+            }
+            steps.append(etape_virtuelle)
+            meilleure['étape'] += 1
+
+        meilleure["type"] = "réelle"
         steps.append(meilleure)
 
-        if cible_min <= meilleure['dose'] <= cible_max:
+        if cible_min <= meilleure['dose obtenue'] <= cible_max:
             break
 
-        current_concentration = meilleure['concentration']
+        current_concentration = meilleure['concentration finale']
 
     if steps:
-        derniere = steps[-1]
+        derniere = steps[-1] if steps[-1].get("type") == "réelle" else steps[-2]
         steps.append({
             "type": "metriques",
             "moyenne_precision": derniere['moyenne_precision'],
@@ -236,7 +250,7 @@ def generate_dilution_steps_continu(dose_mg, concentration_init, nb_hours=24, de
 
 # ---------------------- INTERFACE STREAMLIT ----------------------
 st.set_page_config(page_title="Calcul de dosage intelligent", page_icon="🧪")
-st.title("💉 Application de calcul de dilution")
+st.title("💉 Application d'Optimisation des préparations médicamenteuses")
 
 mode = st.radio("Mode d'administration :", ["Continu", "Discontinu"])
 dose = st.number_input("Dose cible (en mg) :", min_value=0.0, step=0.1)
@@ -264,22 +278,22 @@ if st.button("🧪 Générer le protocole de dilution"):
                         
                         # Affichage conditionnel selon l'étape
                         label_volume = "Volume gardé" if idx >= 2 else "Volume prélevé"
-                        st.write(f"**{label_volume}** : {step['volume prélevé']} mL")
+                        st.write(f"**{label_volume}** : {step['volume prélevé']:.2f} mL")
 
                         if step.get('type') == 'réelle':
-                            st.write(f"**Volume ajouté** : {step['volume ajouté']} mL")
-                            st.write(f"**Volume total** : {step['volume total']} mL")
+                            st.write(f"**Volume ajouté** : {step['volume ajouté']:.2f} mL")
+                            st.write(f"**Volume total** : {step['volume total']:.2f} mL")
                             
                         if step.get('type') == 'virtuelle':
                             st.write(f"**Volume ajouté** : 0.0 mL")
-                            st.write(f"**Volume total** : {step['volume prélevé']} mL")
+                            st.write(f"**Volume total** : {step['volume prélevé']:.2f} mL")
                             
                         st.write(f"**Ratio seringue rempli** : {step['ratio']}%")
                         st.write(f"**Concentration obtenue** : {step['concentration']} mg/mL")
                         st.write(f"**Dose obtenue** : {step['dose']} mg")
                         
                         if 'volume injecté' in step:
-                            st.write(f"**Volume injecté** : {step['volume injecté']} mL")
+                            st.write(f"**Volume injecté** : {step['volume injecté']:.2f} mL")
                         if 'remarque' in step:
                             st.info(step['remarque'])
 
