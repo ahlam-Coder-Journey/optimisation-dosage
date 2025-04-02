@@ -237,7 +237,7 @@ def generate_dilution_steps_continu(dose_mg, concentration_init, nb_hours=24, de
 
 # ---------------------- INTERFACE STREAMLIT ----------------------
 st.set_page_config(page_title="Calcul de dosage intelligent", page_icon="🧪")
-st.title("💉 Application de calcul de dilution")
+st.title("💉 Application d'Optimisation des préparations médicamenteuses")
 
 mode = st.radio("Mode d'administration :", ["Continu", "Discontinu"])
 dose = st.number_input("Dose cible (en mg) :", min_value=0.0, step=0.1)
