@@ -297,7 +297,8 @@ if st.button("🧪 Générer le protocole de dilution"):
                             st.write(f"**Volume total** : {step['volume prélevé']:.2f} mL")
                             
                         st.write(f"**Ratio seringue rempli** : {step['ratio']}%")
-                        st.write(f"**Concentration obtenue** : {step['concentration']} mg/mL")
+                        st.write(f"**Concentration obtenue** : {step.get('concentration finale', step.get('concentration', 'N/A'))} mg/mL")
+
                         st.write(f"**Dose obtenue** : {step['dose']} mg")
                         
                         if 'volume injecté' in step:
